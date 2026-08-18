@@ -40,9 +40,13 @@ A high-concurrency movie reservation platform built with **FastAPI**, **SQLAlche
             │
             ├─► [Succeeds] ──► 200 OK (Proceed to Payment/Confirm)
             └─► [Conflict] ──► 409 Conflict (Seats Unavailable)
-## 🚦 Getting Started (Local Development)
-# 1. Backend Setup
+---
 
+## 🚦 Getting Started (Local Development)
+
+### 1. Backend Setup
+
+```bash
 cd backend
 python -m venv venv
 
@@ -58,21 +62,24 @@ python seed.py
 # Run Server
 uvicorn main:app --reload --port 8000
 
-## 2. Frontend Setup
+---
+# 2.Frontend Setup
 
 cd ../frontend
 npm install
 npm run dev
 
+---
 ## 🧪 Running Concurrency Tests
 To run the automated suite that simulates two simultaneous users attempting to lock the same seat:
-
 cd backend
 python -m pytest test_concurrency.py -v
 
+---
 ## 🐳 Docker Deployment
-
+Run both the frontend and backend using Docker Compose:
 docker-compose up --build
 
 Frontend: http://localhost:5173
 Backend API Docs: http://localhost:8000/docs
+---
