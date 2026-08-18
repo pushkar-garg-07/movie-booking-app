@@ -1,36 +1,78 @@
-# 🎬 CineReserve — Concurrency-Safe Movie Ticket Booking System
+# 🎬 CINE-RESERVE — Full-Stack Movie Ticket & Seat Booking System
 
-A full-stack movie seat reservation platform engineered with FastAPI and React. Designed to handle high-traffic seat selection with pessimistic concurrency control, sub-second reactivity, and transactional integrity.
+A high-concurrency movie reservation platform built with **FastAPI**, **SQLAlchemy (Async)**, **React**, **Vite**, and **Tailwind CSS**. Designed with ACID compliance and pessimistic locking to handle high-demand flash ticketing without double-booking anomalies.
 
 ---
 
-## 📌 Architecture & Concurrency Strategy
+## 🚀 Key Features
 
-* **Pessimistic Seat Locking**: Seats selected by a user enter a `LOCKED` state with a 5-minute auto-expiry window. Other users receive real-time conflict status (`409 Conflict`).
-* **ACID Transactions**: Final booking confirmation converts locked seats into `BOOKED` inside an isolated database transaction, rolling back gracefully if expired.
-* **Timezone Normalization**: UTC-synchronized lock timestamps prevent client-side device drift from affecting reservation timeouts.
+- **Pessimistic Seat Locking**: Implements short-lived dynamic reservations (10-minute hold) to avoid race conditions during concurrent checkouts.
+- **Async Database Architecture**: Fully asynchronous database queries using SQLAlchemy Async Engine + SQLite/PostgreSQL.
+- **JWT-Based Authentication**: Secure authentication flow with Bearer token storage, route protection, and auth state persistence.
+- **Automated Concurrency Testing**: Integration test suite built with `pytest` and `httpx` validating atomic lock conflicts and state transitions.
+- **Dynamic Seat Layout**: Multi-screen seat rendering with interactive status states (`AVAILABLE`, `LOCKED`, `BOOKED`).
 
 ---
 
 ## 🛠️ Tech Stack
 
-* **Backend**: FastAPI, Async SQLAlchemy, SQLite / PostgreSQL, Pydantic v2, Python-Jose (JWT), Passlib (Bcrypt).
-* **Frontend**: React 18, Vite, Tailwind CSS, Axios, Lucide Icons, React Router v6.
-* **Testing & DevOps**: Pytest, Pytest-Asyncio, Docker & Docker Compose.
+| Layer | Technologies |
+|---|---|
+| **Backend** | FastAPI, Python 3.14+, SQLAlchemy (AsyncIO), Pydantic v2, Passlib (Bcrypt), PyJWT |
+| **Frontend** | React 18, Vite, Tailwind CSS, Axios, Lucide Icons |
+| **Testing** | Pytest, Pytest-AsyncIO, HTTPX |
+| **Containerization** | Docker, Docker Compose |
 
 ---
 
-## 🚀 Quick Start (Local Setup)
+## 🏗️ Architecture & Locking Workflow
 
-### 1. Backend Setup
-```bash
+```text
+[User Request] 
+      │
+      ▼
+[FastAPI Route: /bookings/lock-seats]
+      │
+      ├─► Acquire DB Row Lock (SELECT ... FOR UPDATE)
+      ├─► Verify Seat Status != 'BOOKED' & Lock Not Active
+      ├─► Set Seat Status = 'LOCKED', Assign Lock Expiry (now + 10m)
+      └─► Commit Transaction (Release Lock)
+            │
+            ├─► [Succeeds] ──► 200 OK (Proceed to Payment/Confirm)
+            └─► [Conflict] ──► 409 Conflict (Seats Unavailable)
+## 🚦 Getting Started (Local Development)
+# 1. Backend Setup
+
 cd backend
 python -m venv venv
-# Windows:
-.\venv\Scripts\Activate.ps1
-# Linux/macOS:
-source venv/bin/activate
 
-pip install -r requirements.txt
+# Windows (PowerShell)
+.\venv\Scripts\Activate.ps1
+
+# Install Dependencies
+pip install fastapi uvicorn sqlalchemy aiosqlite pydantic passlib bcrypt python-jose pyjwt pytest pytest-asyncio httpx
+
+# Seed Database
 python seed.py
+
+# Run Server
 uvicorn main:app --reload --port 8000
+
+## 2. Frontend Setup
+
+cd ../frontend
+npm install
+npm run dev
+
+## 🧪 Running Concurrency Tests
+To run the automated suite that simulates two simultaneous users attempting to lock the same seat:
+
+cd backend
+python -m pytest test_concurrency.py -v
+
+## 🐳 Docker Deployment
+
+docker-compose up --build
+
+Frontend: http://localhost:5173
+Backend API Docs: http://localhost:8000/docs
